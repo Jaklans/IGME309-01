@@ -1,8 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\E01 Test"
+    "\\E01 Test",
+    "\\E02 GLFW Config",
+    "\\HW1"
   ],
-  "SelectedNode": "\\E01 Test",
+  "SelectedNode": "\\E02 GLFW Config\\E02.sln",
   "PreviewInSolutionExplorer": false
 }
