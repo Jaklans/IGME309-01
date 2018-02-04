@@ -1,5 +1,0 @@
-﻿  C05_Shaders.vcxproj -> D:\Profiles\jxs2828\source\repos\IGME309-01\E03 Complementary Colors\Z_DELETE\C05_Shaders_d.exe
-  File not found - Shaders
-  0 File(s) copied
-C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppCommon.targets(133,5): error MSB3073: The command "xcopy "D:\Profiles\jxs2828\source\repos\IGME309-01\E03 Complementary Colors\include\Simplex\Shaders" "D:\Profiles\jxs2828\source\repos\IGME309-01\E03 Complementary Colors\_Binary\Shaders" /y
-C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppCommon.targets(133,5): error MSB3073: :VCEnd" exited with code 4.
