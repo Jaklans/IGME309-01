@@ -345,6 +345,9 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 		AddTri(bot, *(botRim + i), *(botRim + ((i + 1) % a_nSubdivisions)));
 	}
 
+	delete[] topRim;
+	delete[] botRim;
+
 	// Adding information about color
 	CompleteMesh(a_v3Color);
 	CompileOpenGL3X();
@@ -399,6 +402,11 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 		AddQuad(*(botInnerRim + ((i + 1) % a_nSubdivisions)), *(botInnerRim + i), *(botOuterRim + ((i + 1) % a_nSubdivisions)), *(botOuterRim + i));
 	}
 
+	delete[] topOuterRim;
+	delete[] topInnerRim;
+	delete[] botOuterRim;
+	delete[] botInnerRim;
+
 	// Adding information about color
 	CompleteMesh(a_v3Color);
 	CompileOpenGL3X();
@@ -427,9 +435,16 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	// Generate Mesh
+
+	//a_nSubdivisionsA is number of rings
+	//a_nSubdivisionsB is verticies per ring
+
+	vector3** rings = new vector3*[a_nSubdivisionsA];
+
+	for (int i = 0; i < a_nSubdivisionsA; i++) {
+
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -465,18 +480,41 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 		*(rims + i) = new vector3[a_nSubdivisions];
 
 		//Find the radius at each height using: (h(2R - h))^.5
-		float height = i * a_fRadius / a_nSubdivisions;
+		float height = i * 2 *  a_fRadius / a_nSubdivisions;
 		float radiusAtHeight = glm::sqrt(height * (2 * a_fRadius - height));
 
 		for (int j = 0; j < a_nSubdivisions; j++) 
 		{
 			//Create rims at every height (turnary handles height)
 			*(*(rims + i) + j) = vector3(
-				glm::cos(i * divAngle) * a_fRadius,
-				(i < .5f * a_nSubdivisions) ? a_fRadius - height : height,
-				glm::sin(i * divAngle) * a_fRadius);
+				glm::cos(j * divAngle) * radiusAtHeight,
+				height - a_fRadius,
+				//(i < .5f * a_nSubdivisions) ? (a_fRadius - height) * 2 : height * 2,
+				glm::sin(j * divAngle) * radiusAtHeight);
 		}
 	}
+
+	//Create quads at varius heights
+	for (int i = 1; i < a_nSubdivisions - 1; i++) {
+		//Creates quads around the height belt
+		for (int j = 0; j < a_nSubdivisions; j++) {
+			AddQuad(
+				*(*(rims + (i + 1) % a_nSubdivisions) + (j + 1) % a_nSubdivisions),
+				*(*(rims + (i + 1) % a_nSubdivisions) + j),
+				*(*(rims + i) + (j + 1) % a_nSubdivisions),
+				*(*(rims + i) + j));
+		}
+	}
+	//Create tris caps
+	for (int i = 0; i < a_nSubdivisions; i++) {
+		AddTri(*(*(rims + 1) + (i + 1) % a_nSubdivisions), *(*(rims + 1) + i), bot);
+		AddTri(*(*(rims + a_nSubdivisions - 1) + (i + a_nSubdivisions - 1) % a_nSubdivisions), *(*(rims + a_nSubdivisions - 1) + i), top);
+	}
+
+	for (int i = 0; i < a_nSubdivisions; i++) {
+		delete[] *(rims + i);
+	}
+	delete[] rims;
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
