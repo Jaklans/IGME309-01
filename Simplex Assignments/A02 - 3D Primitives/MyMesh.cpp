@@ -281,7 +281,7 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 
 	vector3* rim = new vector3[a_nSubdivisions];
 
-	float divAngle = 2 * glm::pi<float>() / a_nSubdivisions;
+	float divAngle = 2 * PI / a_nSubdivisions;
 
 	for (int i = 0; i < a_nSubdivisions; i++) 
 	{
@@ -326,7 +326,7 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	vector3* topRim = new vector3[a_nSubdivisions];
 	vector3* botRim = new vector3[a_nSubdivisions];
 
-	float divAngle = 2 * glm::pi<float>() / a_nSubdivisions;
+	float divAngle = 2 * PI / a_nSubdivisions;
 
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
@@ -380,7 +380,7 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	vector3* botOuterRim = new vector3[a_nSubdivisions];
 	vector3* botInnerRim = new vector3[a_nSubdivisions];
 
-	float divAngle = 2 * glm::pi<float>() / a_nSubdivisions;
+	float divAngle = 2 * PI / a_nSubdivisions;
 
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
@@ -426,25 +426,74 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 		a_nSubdivisionsA = 3;
 	if (a_nSubdivisionsA > 360)
 		a_nSubdivisionsA = 360;
-
+	
 	if (a_nSubdivisionsB < 3)
 		a_nSubdivisionsB = 3;
 	if (a_nSubdivisionsB > 360)
 		a_nSubdivisionsB = 360;
-
+	
 	Release();
 	Init();
 
 	// Generate Mesh
 
+
+	//Quick issue fix
+	a_fInnerRadius *= 2;
+	a_fOuterRadius *= 2;
 	//a_nSubdivisionsA is number of rings
 	//a_nSubdivisionsB is verticies per ring
 
 	vector3** rings = new vector3*[a_nSubdivisionsA];
 
-	for (int i = 0; i < a_nSubdivisionsA; i++) {
+	float divAngle = 2 * PI / a_nSubdivisionsB;
 
+	float shapeRadius = a_fOuterRadius - a_fInnerRadius;
+	float ringRadius = shapeRadius / 2;
+
+	*rings = new vector3[a_nSubdivisionsB];
+
+	//Create the base ring
+	for (int i = 0; i < a_nSubdivisionsB; i++) {
+		*((*rings) + i) = vector3(
+			glm::cos(divAngle * i) * ringRadius + shapeRadius,
+			glm::sin(divAngle * i) * ringRadius,
+			0);
+		//std::cout << "    x:" << (*((*rings) + i)).x << "  y:" << (*((*rings) + i)).y << "  z:" << (*((*rings) + i)).z << std::endl;
 	}
+
+	//Create rotated copies
+	for (int i = 1; i < a_nSubdivisionsA; i++) {
+		*(rings + i) = new vector3[a_nSubdivisionsB];
+		//Create a rotation matrix
+		matrix4 rotationMat = glm::rotate((float)(i * 360 / a_nSubdivisionsA), glm::vec3(0, 1, 0));
+		for (int j = 0; j < a_nSubdivisionsB; j++) {
+			//Create a temporary vec4 for transformation
+			vector4 temp = vector4((*(*rings + j)).x, (*(*rings + j)).y, (*(*rings + j)).z, 1);
+
+			//Rotate
+			temp = rotationMat * temp;
+
+			//Set values
+			*(*(rings + i) + j) = vector3(temp.x, temp.y, temp.z);
+		}
+	}
+
+	for (int i = 0; i < a_nSubdivisionsA; i++) {
+		for (int j = 0; j < a_nSubdivisionsB; j++) {
+			AddQuad(
+				*(*(rings + i) + (j + 1) % a_nSubdivisionsB),
+				*(*(rings + i) + j),
+				*(*(rings + (i + 1) % a_nSubdivisionsA) + (j + 1) % a_nSubdivisionsB),
+				*(*(rings + (i + 1) % a_nSubdivisionsA) + j));
+		}
+	}
+
+	for (int i = 0; i < a_nSubdivisionsA; i++) {
+		delete[] *(rings + i);
+	}
+
+	delete[] rings;
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -461,43 +510,62 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 		GenerateCube(a_fRadius * 2.0f, a_v3Color);
 		return;
 	}
-	if (a_nSubdivisions > 6)
-		a_nSubdivisions = 6;
 
 	Release();
 	Init();
-
+	
+	
 	// Generate Mesh
-	vector3 top = vector3(0,  a_fRadius, 0);
+	vector3 top = vector3(0, a_fRadius, 0);
 	vector3 bot = vector3(0, -a_fRadius, 0);
 
 	vector3** rims = new vector3*[a_nSubdivisions];
 
-	float divAngle = 2 * glm::pi<float>() / a_nSubdivisions;
+	float divAngle = 2 * PI / a_nSubdivisions;
 
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		*(rims + i) = new vector3[a_nSubdivisions];
 
-		//Find the radius at each height using: (h(2R - h))^.5
-		float height = i * 2 *  a_fRadius / a_nSubdivisions;
+		//Find the correct height subdivision acording to formula h = -R * sin(theta) + R
+		float height = -a_fRadius * glm::sin(PI * i / a_nSubdivisions) + a_fRadius;
+
+		//Find the radius at each height using: r = (h(2R - h))^.5
 		float radiusAtHeight = glm::sqrt(height * (2 * a_fRadius - height));
 
-		for (int j = 0; j < a_nSubdivisions; j++) 
+		if (i > .5f * a_nSubdivisions) {
+			height *= -1;
+			height += 2 * a_fRadius;
+		}
+		//Fun debug outputs
+		//std::cout << i << "  " << height << "  " << radiusAtHeight << std::endl;
+
+		for (int j = 0; j < a_nSubdivisions; j++)
 		{
 			//Create rims at every height (turnary handles height)
 			*(*(rims + i) + j) = vector3(
 				glm::cos(j * divAngle) * radiusAtHeight,
 				height - a_fRadius,
-				//(i < .5f * a_nSubdivisions) ? (a_fRadius - height) * 2 : height * 2,
 				glm::sin(j * divAngle) * radiusAtHeight);
+
+			//Fun debug outputs
+			//std::cout << "    x:" << (*(*(rims + i) + j)).x << "  y:" << (*(*(rims + i) + j)).y << "  z:" << (*(*(rims + i) + j)).z << std::endl;
 		}
 	}
 
 	//Create quads at varius heights
-	for (int i = 1; i < a_nSubdivisions - 1; i++) {
+	for (int i = 0; i < a_nSubdivisions; i++) {
+
 		//Creates quads around the height belt
 		for (int j = 0; j < a_nSubdivisions; j++) {
+
+			//Ignore the caps for now
+			if (i == a_nSubdivisions / 2 || 
+				(i == a_nSubdivisions / 2 - 1 && a_nSubdivisions % 2 == 0)) {
+				continue;
+			}
+			
+			//Add the rings of quads at every height
 			AddQuad(
 				*(*(rims + (i + 1) % a_nSubdivisions) + (j + 1) % a_nSubdivisions),
 				*(*(rims + (i + 1) % a_nSubdivisions) + j),
@@ -505,10 +573,19 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 				*(*(rims + i) + j));
 		}
 	}
+
 	//Create tris caps
+	int topRimIndex = a_nSubdivisions / 2 + 1;
+	int botRimIndex = a_nSubdivisions / 2;
+
+	//If odd, adjust index
+	if (a_nSubdivisions % 2 == 0){
+		botRimIndex -= 1;
+	}
+	
 	for (int i = 0; i < a_nSubdivisions; i++) {
-		AddTri(*(*(rims + 1) + (i + 1) % a_nSubdivisions), *(*(rims + 1) + i), bot);
-		AddTri(*(*(rims + a_nSubdivisions - 1) + (i + a_nSubdivisions - 1) % a_nSubdivisions), *(*(rims + a_nSubdivisions - 1) + i), top);
+		AddTri(*(*(rims + botRimIndex) + i), *(*(rims + botRimIndex) + (i + 1) % a_nSubdivisions), bot);
+		AddTri(*(*(rims + topRimIndex) + i), *(*(rims + topRimIndex) + (i + a_nSubdivisions - 1) % a_nSubdivisions), top);
 	}
 
 	for (int i = 0; i < a_nSubdivisions; i++) {
