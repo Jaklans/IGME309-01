@@ -87,6 +87,15 @@ public:
 	OUTPUT: ---
 	*/
 	~Application(void);
+
+	/*
+	USAGE: Creates an array of points making up the shape
+	ARGUMENTS:
+		float a_fRadius -> Radius of the shape
+		int a_nSubdivisions -> The number of sides to the shape
+	OUTPUT: Pointer to the first element of an array of points making up a shape
+	*/
+	vector3* GeneratePoints(float a_fRadius, int a_nSubdivisions);
 #pragma endregion
 
 private:

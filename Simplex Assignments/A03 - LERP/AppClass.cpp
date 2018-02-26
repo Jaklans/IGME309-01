@@ -94,3 +94,9 @@ void Application::Release(void)
 	//release GUI
 	ShutdownGUI();
 }
+
+vector3* Application::GeneratePoints(float a_fRadius, int a_nSubdivisions)
+{
+	vector3* shape = new 
+	return nullptr;
+}
