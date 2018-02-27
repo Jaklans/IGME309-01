@@ -37,6 +37,7 @@ Application::~Application(void)
 	ReleaseAllSingletons();
 	SafeDelete(m_pWindow);
 }
+
 void Application::InitControllers(void)
 {
 	//Make sure this method is only executed once

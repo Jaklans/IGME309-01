@@ -45,6 +45,16 @@ private:
 	ControllerInput* m_pController[8]; //Controller
 	uint m_uActCont = 0; //Active Controller of the Application
 
+	//Array for holding shapes
+	vector3** m_aShapeArray = nullptr;
+
+	//Array for holding indexes for the shapes
+	int* m_aShapeIndecies;
+
+	//Timer values
+	float fTimer;
+	uint uClock;
+
 public:
 #pragma region Constructor / Run / Destructor
 	/*
@@ -87,6 +97,15 @@ public:
 	OUTPUT: ---
 	*/
 	~Application(void);
+
+	/*
+	USAGE: Creates an array of points making up the shape
+	ARGUMENTS:
+		float a_fRadius -> Radius of the shape
+		int a_nSubdivisions -> The number of sides to the shape
+	OUTPUT: Pointer to the first element of an array of points making up a shape
+	*/
+	vector3* GeneratePoints(float a_fRadius, int a_nSubdivisions);
 #pragma endregion
 
 private:
@@ -123,6 +142,7 @@ private:
 	OUTPUT: ---
 	*/
 	void Release(void);
+
 #pragma endregion
 
 #pragma region Main Loop
