@@ -45,6 +45,16 @@ private:
 	ControllerInput* m_pController[8]; //Controller
 	uint m_uActCont = 0; //Active Controller of the Application
 
+	//Array for holding shapes
+	vector3** m_aShapeArray = nullptr;
+
+	//Array for holding indexes for the shapes
+	int* m_aShapeIndecies;
+
+	//Timer values
+	float fTimer;
+	uint uClock;
+
 public:
 #pragma region Constructor / Run / Destructor
 	/*
@@ -132,6 +142,7 @@ private:
 	OUTPUT: ---
 	*/
 	void Release(void);
+
 #pragma endregion
 
 #pragma region Main Loop
