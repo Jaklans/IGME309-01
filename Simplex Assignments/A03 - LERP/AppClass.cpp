@@ -186,9 +186,9 @@ vector3* Application::GeneratePoints(float a_fRadius, int a_nSubdivisions)
 	*shape = vector3(a_fRadius, 0, 0);
 
 	for (int i = 1; i < a_nSubdivisions; i++) {
-		std::cout << i * 360.0f / a_nSubdivisions << std::endl;
+		//std::cout << i * 360.0f / a_nSubdivisions << std::endl;
 		*(shape + i) =  (vector3)glm::rotateZ(vector4(*shape, 1), i * 360.0f / a_nSubdivisions);
-		std::cout << "   X:" << (shape + i)->x << " Y:" << (shape + i)->y << " Z:" << (shape + i)->z << std::endl;
+		//std::cout << "   X:" << (shape + i)->x << " Y:" << (shape + i)->y << " Z:" << (shape + i)->z << std::endl;
 	}
 
 	return shape;
