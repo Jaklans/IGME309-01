@@ -25,12 +25,19 @@ void Application::DrawGUI(void)
 		ImGui::SetNextWindowPos(ImVec2(1, 1), ImGuiSetCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(340, 60), ImGuiSetCond_FirstUseEver);
 		String sAbout = m_pSystem->GetAppName() + " - About";
+
 		ImGui::Begin(sAbout.c_str(), (bool*)0, window_flags);
 		{
 			ImGui::Text("Programmer: \n");
 			ImGui::TextColored(v4Color, m_sProgrammer.c_str());
+
 			ImGui::Text("FrameRate: %.2f [FPS] -> %.3f [ms/frame]\n",
 				ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
+
+			ImGui::Text("AngularVelociity: %.2f [Degrees per Second]", 
+				m_fAxisAngularVelocity * ImGui::GetIO().Framerate);
+
+			ImGui::Text("");
 			ImGui::Text("Control:\n");
 			ImGui::Text("   WASD: Movement\n");
 			ImGui::Text("	 F1: Perspective\n");

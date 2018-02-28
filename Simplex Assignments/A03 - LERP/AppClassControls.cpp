@@ -70,7 +70,8 @@ void Application::ProcessKeyPressed(sf::Event a_event)
 	switch (a_event.key.code)
 	{
 	default: break;
-	case sf::Keyboard::Space:
+	case sf::Keyboard::C:
+		m_bDeceleration = !m_bDeceleration;
 		break;
 	}
 	//gui
@@ -446,10 +447,6 @@ void Application::ProcessKeyboard(void)
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::X)) {
 		m_fAxisRotations = 0;
-	}
-
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) {
-		m_bDeceleration = !m_bDeceleration;
 	}
 
 	//Update Rotation based on Angular Velocity
