@@ -414,6 +414,47 @@ void Application::ProcessKeyboard(void)
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
 		m_pCameraMngr->MoveVertical(fSpeed);
 #pragma endregion
+#pragma region Shape Rotation
+	//If Space is pressed, increace accelleration of the rotation
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+		if (fMultiplier) {
+			m_fAxisAngularVelocity -= .25f;
+		}
+		else {
+			m_fAxisAngularVelocity += .25f;
+		}
+	}
+	//If Space is not pressed, decellerate the rotation
+	else if (!(m_fAxisAngularVelocity < .1f && m_fAxisAngularVelocity > -.1f)) {
+		if (m_bDeceleration) {
+			if (m_fAxisAngularVelocity > 0) {
+				m_fAxisAngularVelocity -= .025f;
+			}
+			else {
+				m_fAxisAngularVelocity += .025f;
+			}
+		}
+	}
+	//If the acceleration is close to zero, set to zero
+	else {
+		m_fAxisAngularVelocity = 0;
+	}
+	
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
+		m_fAxisAngularVelocity = 0;
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::X)) {
+		m_fAxisRotations = 0;
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) {
+		m_bDeceleration = !m_bDeceleration;
+	}
+
+	//Update Rotation based on Angular Velocity
+	m_fAxisRotations += m_fAxisAngularVelocity;
+#pragma endregion
 }
 //Joystick
 void Application::ProcessJoystick(void)

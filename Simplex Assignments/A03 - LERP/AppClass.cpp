@@ -8,6 +8,11 @@ void Application::InitVariables(void)
 	fTimer = 0;
 	uClock = m_pSystem->GenClock();
 
+	//Initialize rotation variables
+	m_fAxisRotations = 0;
+	m_fAxisAngularVelocity = 0;
+	m_bDeceleration = true;
+
 	//Set the position and target of the camera
 	//(I'm at [0,0,10], looking at [0,0,0] and up is the positive Y axis)
 	m_pCameraMngr->SetPositionTargetAndUp(AXIS_Z * 20.0f, ZERO_V3, AXIS_Y);
@@ -94,25 +99,52 @@ void Application::Display(void)
 	// draw the shapes and spheres
 	for (uint i = 0; i < m_uOrbits; ++i)
 	{
-		m_pMeshMngr->AddMeshToRenderList(m_shapeList[i], glm::rotate(m4Offset, 90.0f, AXIS_X));
+		//The provided rotation as a starting point
+		matrix4 m4ShapeTransformation = glm::rotate(m4Offset, 90.0f, AXIS_X);
+
+		//Creates a rotation around a calculated axis
+		m4ShapeTransformation = 
+			glm::rotate(
+				m4ShapeTransformation,
+				m_fAxisRotations, //Variable controlled by keyboard input to determine amount of rotation
+				//Create an axis that starts as the Y axis and rotating around the Z by an amount determined
+				//by i. Uses X and Z due to initial rotation
+				vector3(
+					sin(i * PI / (m_uOrbits)),
+					0,
+					cos(i * PI / (m_uOrbits))));
+
+		//Utilize calculated rotation
+		m_pMeshMngr->AddMeshToRenderList(m_shapeList[i], m4ShapeTransformation);
 
 		if (updateIndex) {
 			m_aShapeIndecies[i] += 1;
 		}
 
-		/* Done with Array indexing. Ill calm down on the pointer arithmatic I swear
+		/* Same code with Array indexing. Ill calm down on the pointer arithmatic I swear
 
 		vector3 startPoint = m_aShapeArray[i][m_aShapeIndecies[i % (i + 3)] % (i + 3)];
 		vector3 endPoint = m_aShapeArray[i][(m_aShapeIndecies[i % (i + 3)] + 1) % (i + 3)];
 		*/
 
+		//Calculate the desired position by LERPing between points
 		vector3 v3CurrentPos =
 			glm::lerp(
+				//Shape Indecies tells what index to use for the start and end point
+				//Shape Array holds all of the points for each shape
 				*(*(m_aShapeArray + i) + (*(m_aShapeIndecies + i % (i + 3)) % (i + 3))),
 				*(*(m_aShapeArray + i) + ((*(m_aShapeIndecies + i % (i + 3)) + 1) % (i + 3))),
 				fTimer);
 
-		matrix4 m4Model = glm::translate(m4Offset, v3CurrentPos);
+		//Apply the transformation
+		matrix4 m4Model = glm::translate(
+			//Use the previously calculated rotation as a starting point, but rotate
+			//it to undo the initial rotation (unneeded for our purpose)
+			glm::rotate(
+				m4ShapeTransformation,
+				-90.0f,
+				AXIS_X), 
+			v3CurrentPos);
 
 		//draw spheres
 		m_pMeshMngr->AddSphereToRenderList(m4Model * glm::scale(vector3(0.15)), C_WHITE);

@@ -37,6 +37,15 @@ void Application::DrawGUI(void)
 			ImGui::Text("	 F2: Orthographic X\n");
 			ImGui::Text("	 F3: Orthographic Y\n");
 			ImGui::Text("	 F4: Orthographic Z\n");
+			ImGui::Text("");
+			ImGui::Text("Bounus Controls!");
+			ImGui::Text("   SPACE: Accellerate Angular Velocity!");
+			ImGui::Text("   ALT + SPACE: Decellerate Angular Velocity!");
+			ImGui::Text("   Z: Stop the Spinning!");
+			ImGui::Text("   X: Reset the Orientation!");
+			ImGui::Text("   C: Toggle Auto-Deceleration!");
+			
+			m_bDeceleration ? ImGui::TextColored(v4Color, "       STATE: TRUE") : ImGui::TextColored(v4Color, "       STATE: FALSE");
 		}
 		ImGui::End();
 	}

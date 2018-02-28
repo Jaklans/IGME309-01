@@ -55,6 +55,11 @@ private:
 	float fTimer;
 	uint uClock;
 
+	//Rotation Variables
+	float m_fAxisRotations;
+	float m_fAxisAngularVelocity;
+	bool m_bDeceleration;
+
 public:
 #pragma region Constructor / Run / Destructor
 	/*
