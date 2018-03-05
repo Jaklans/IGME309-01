@@ -385,6 +385,16 @@ void Application::ProcessKeyboard(void)
 
 	if (fMultiplier)
 		fSpeed *= 5.0f;
+
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+		vector3 currentPos = m_pCamera->GetPosition();
+		m_pCamera->SetPosition(
+			currentPos +
+			glm::normalize(m_pCamera->GetTarget() - currentPos) * fSpeed
+		);
+	}
+
 #pragma endregion
 }
 //Joystick
