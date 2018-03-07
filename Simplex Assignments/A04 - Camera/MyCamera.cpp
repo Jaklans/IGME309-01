@@ -1,7 +1,6 @@
 #include "MyCamera.h"
 using namespace Simplex;
 
-#include <iostream>
 void PrintVector(String name, vector3 toPrint) {
 	std::cout << name << "->  X:" << toPrint.x << " Y:" << toPrint.y << " Z:" << toPrint.z << std::endl;
 }
@@ -11,7 +10,7 @@ void Simplex::MyCamera::SetPosition(vector3 a_v3Position) { m_v3Target += a_v3Po
 
 vector3 Simplex::MyCamera::GetPosition(void) { return m_v3Position; }
 
-void Simplex::MyCamera::SetTarget(vector3 a_v3Target) { m_v3Target = a_v3Target; }
+void Simplex::MyCamera::SetTarget(vector3 a_v3Target) { m_v3Target = a_v3Target; m_v3Up = vector3(0, 1, 0); }
 
 vector3 Simplex::MyCamera::GetTarget(void) { return m_v3Target; }
 
@@ -144,10 +143,6 @@ void Simplex::MyCamera::SetPositionTargetAndUp(vector3 a_v3Position, vector3 a_v
 	m_v3Target = a_v3Target;
 	m_v3Up = a_v3Position + a_v3Upward;
 	CalculateProjectionMatrix();
-
-	PrintVector("Position", m_v3Position);
-	PrintVector("Target", m_v3Target);
-	PrintVector("Up", m_v3Up);
 }
 
 void Simplex::MyCamera::CalculateViewMatrix(void)

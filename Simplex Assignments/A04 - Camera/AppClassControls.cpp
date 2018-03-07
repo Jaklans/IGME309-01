@@ -12,7 +12,6 @@ void Application::ProcessMouseMovement(sf::Event a_event)
 		m_v3Mouse += vector3(-8.0f, -32.0f, 0.0f);
 	gui.io.MousePos = ImVec2(m_v3Mouse.x, m_v3Mouse.y);
 
-
 }
 void Application::ProcessMousePressed(sf::Event a_event)
 {
@@ -326,14 +325,19 @@ void Application::ArcBall(float a_fSensitivity)
 
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 								   //return qArcBall; // return the new quaternion orientation
+
+#pragma region Camera Aiming
+	m_pCamera->SetTarget(glm::rotate(m_qArcBall, m_pCamera->GetForward()) + m_pCamera->GetPosition());
+#pragma endregion
 }
+#include <iostream>
 void Application::CameraRotation(float a_fSpeed)
 {
 	if (m_bFPC == false)
 		return;
 
-	UINT	MouseX, MouseY;		// Coordinates for the mouse
-	UINT	CenterX, CenterY;	// Coordinates for the center of the screen.
+	INT	MouseX, MouseY;		// Coordinates for the mouse
+	INT	CenterX, CenterY;	// Coordinates for the center of the screen.
 
 								//Initialize the position of the pointer to the middle of the screen
 	CenterX = m_pSystem->GetWindowX() + m_pSystem->GetWindowWidth() / 2;
@@ -349,6 +353,7 @@ void Application::CameraRotation(float a_fSpeed)
 	float fAngleX = 0.0f;
 	float fAngleY = 0.0f;
 	float fDeltaMouse = 0.0f;
+
 	if (MouseX < CenterX)
 	{
 		fDeltaMouse = static_cast<float>(CenterX - MouseX);
@@ -357,20 +362,43 @@ void Application::CameraRotation(float a_fSpeed)
 	else if (MouseX > CenterX)
 	{
 		fDeltaMouse = static_cast<float>(MouseX - CenterX);
-		fAngleY -= fDeltaMouse * a_fSpeed;
+		fAngleY += fDeltaMouse * a_fSpeed;
 	}
 
 	if (MouseY < CenterY)
 	{
 		fDeltaMouse = static_cast<float>(CenterY - MouseY);
-		fAngleX -= fDeltaMouse * a_fSpeed;
+		fAngleX += fDeltaMouse * a_fSpeed;
 	}
 	else if (MouseY > CenterY)
 	{
 		fDeltaMouse = static_cast<float>(MouseY - CenterY);
 		fAngleX += fDeltaMouse * a_fSpeed;
 	}
-	//Change the Yaw and the Pitch of the camera
+
+	fAngleX = static_cast<float>(MouseX - CenterX);
+	fAngleY = static_cast<float>(MouseY - CenterY);
+	
+	if (fAngleX != 0 && fAngleY != 0) {
+
+		quaternion rotation = IDENTITY_QUAT;
+
+		vector3 cameraForward = m_pCamera->GetForward();
+
+		std::cout << fAngleY  << std::endl;
+		
+		if (fAngleX != 0) {
+			//rotation = rotation * glm::angleAxis(fAngleX * 10, AXIS_X);
+			//rotation = rotation * glm::angleAxis(fAngleX * 100, AXIS_Y);
+		}
+		if (fAngleY != 0) {
+			//rotation = rotation * glm::angleAxis(fAngleY * 10, AXIS_X);
+			rotation = rotation * glm::angleAxis(fAngleY, glm::rotate(vector3(cameraForward.x, 0, cameraForward.z), 90.0f, AXIS_Y));
+		}
+		
+		m_pCamera->SetTarget(m_pCamera->GetForward() * rotation + m_pCamera->GetPosition());
+	}
+
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }
 //Keyboard
@@ -411,8 +439,6 @@ void Application::ProcessKeyboard(void)
 			m_pCamera->GetPosition() + glm::rotate(m_pCamera->GetForward(), -90.0f, vector3(0, 1, 0)) * fSpeed
 		);
 	}
-
-	
 
 #pragma endregion
 }
