@@ -211,6 +211,13 @@ public:
 	OUTPUT: ---
 	*/
 	void CalculateProjectionMatrix(void);
+
+	/*
+	USAGE: Returns the Forward direction vector of the camera
+	ARGUMENTS: ---
+	OUTPUT: Forward direction vector
+	*/
+	vector3 GetForward(void);
 };
 
 } //namespace Simplex

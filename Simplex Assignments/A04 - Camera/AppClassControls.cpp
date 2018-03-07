@@ -11,6 +11,8 @@ void Application::ProcessMouseMovement(sf::Event a_event)
 	if(!m_pSystem->IsWindowFullscreen() && !m_pSystem->IsWindowBorderless())
 		m_v3Mouse += vector3(-8.0f, -32.0f, 0.0f);
 	gui.io.MousePos = ImVec2(m_v3Mouse.x, m_v3Mouse.y);
+
+
 }
 void Application::ProcessMousePressed(sf::Event a_event)
 {
@@ -386,14 +388,31 @@ void Application::ProcessKeyboard(void)
 	if (fMultiplier)
 		fSpeed *= 5.0f;
 
-
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-		vector3 currentPos = m_pCamera->GetPosition();
 		m_pCamera->SetPosition(
-			currentPos +
-			glm::normalize(m_pCamera->GetTarget() - currentPos) * fSpeed
+			m_pCamera->GetPosition() + m_pCamera->GetForward() * fSpeed
 		);
 	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+		m_pCamera->SetPosition(
+			m_pCamera->GetPosition() + m_pCamera->GetForward() * -fSpeed
+		);
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+		m_pCamera->SetPosition(
+			m_pCamera->GetPosition() + glm::rotate(m_pCamera->GetForward(), 90.0f, vector3(0, 1, 0)) * fSpeed
+		);
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+		m_pCamera->SetPosition(
+			m_pCamera->GetPosition() + glm::rotate(m_pCamera->GetForward(), -90.0f, vector3(0, 1, 0)) * fSpeed
+		);
+	}
+
+	
 
 #pragma endregion
 }
