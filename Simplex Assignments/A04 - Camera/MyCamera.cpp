@@ -1,10 +1,6 @@
 #include "MyCamera.h"
 using namespace Simplex;
 
-void PrintVector(String name, vector3 toPrint) {
-	std::cout << name << "->  X:" << toPrint.x << " Y:" << toPrint.y << " Z:" << toPrint.z << std::endl;
-}
-
 //Accessors
 void Simplex::MyCamera::SetPosition(vector3 a_v3Position) { m_v3Target += a_v3Position - m_v3Position; m_v3Position = a_v3Position; }
 

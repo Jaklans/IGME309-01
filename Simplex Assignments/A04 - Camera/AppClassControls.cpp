@@ -379,21 +379,19 @@ void Application::CameraRotation(float a_fSpeed)
 	fAngleX = static_cast<float>(MouseX - CenterX);
 	fAngleY = static_cast<float>(MouseY - CenterY);
 	
-	if (fAngleX != 0 && fAngleY != 0) {
+	if (fAngleX != 0 || fAngleY != 0) {
 
 		quaternion rotation = IDENTITY_QUAT;
 
 		vector3 cameraForward = m_pCamera->GetForward();
 
-		std::cout << fAngleY  << std::endl;
+		std::cout << "X: " << fAngleX << " Y: " << fAngleY  << std::endl;
 		
 		if (fAngleX != 0) {
-			//rotation = rotation * glm::angleAxis(fAngleX * 10, AXIS_X);
-			//rotation = rotation * glm::angleAxis(fAngleX * 100, AXIS_Y);
+			rotation = rotation * glm::angleAxis(fAngleX * a_fSpeed, AXIS_Y);
 		}
 		if (fAngleY != 0) {
-			//rotation = rotation * glm::angleAxis(fAngleY * 10, AXIS_X);
-			rotation = rotation * glm::angleAxis(fAngleY, glm::rotate(vector3(cameraForward.x, 0, cameraForward.z), 90.0f, AXIS_Y));
+			rotation = rotation * glm::angleAxis(fAngleY * (-a_fSpeed * 1.0f), glm::rotate(vector3(cameraForward.x, 0, cameraForward.z), 90.0f, AXIS_Y));
 		}
 		
 		m_pCamera->SetTarget(m_pCamera->GetForward() * rotation + m_pCamera->GetPosition());
@@ -417,26 +415,54 @@ void Application::ProcessKeyboard(void)
 		fSpeed *= 5.0f;
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+		//Offset the position forward relative to the camera forward
 		m_pCamera->SetPosition(
+			//Base position plus the forward times the speed
 			m_pCamera->GetPosition() + m_pCamera->GetForward() * fSpeed
 		);
 	}
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+		//Offset the position backwards relative to the camera forward
 		m_pCamera->SetPosition(
-			m_pCamera->GetPosition() + m_pCamera->GetForward() * -fSpeed
+			//Base position minus the forward times the speed
+			m_pCamera->GetPosition() - m_pCamera->GetForward() * fSpeed
 		);
 	}
-
+	
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+		//Offset the position to the left relative to the camera forward
 		m_pCamera->SetPosition(
-			m_pCamera->GetPosition() + glm::rotate(m_pCamera->GetForward(), 90.0f, vector3(0, 1, 0)) * fSpeed
+			//Base position
+			m_pCamera->GetPosition() +
+			//Add rightward vector
+			glm::rotate(
+				//Start with forward projected on XY plane
+				m_pCamera->GetForward() * AXIS_XZ,
+				//Rotate -90 degrees
+				-90.0f,
+				//About Y axis
+				AXIS_Y)
+			//Multiplied by speed (negative right for left)
+			* -fSpeed
 		);
 	}
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+		//Offset the position to the right relative to the camera forward
 		m_pCamera->SetPosition(
-			m_pCamera->GetPosition() + glm::rotate(m_pCamera->GetForward(), -90.0f, vector3(0, 1, 0)) * fSpeed
+			//Base position
+			m_pCamera->GetPosition() + 
+			//Add rightward vector
+			glm::rotate(
+				//Start with forward projected on XY plane
+				m_pCamera->GetForward() * AXIS_XZ,
+				//Rotate -90 degrees
+				-90.0f,
+				//About Y axis
+				AXIS_Y)
+			//Multiplied by speed
+			* fSpeed
 		);
 	}
 
