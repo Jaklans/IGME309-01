@@ -15,9 +15,12 @@ class MyRigidBody
 {
 	MeshManager* m_pMeshMngr = nullptr; //for displaying the Rigid Body
 
+	vector3* m_v3Corner; //Array of Verticies (for SAT)
+
 	bool m_bVisibleBS = false; //Visibility of bounding sphere
 	bool m_bVisibleOBB = true; //Visibility of Oriented bounding box
 	bool m_bVisibleARBB = true; //Visibility of axis (Re)aligned bounding box
+	bool m_bVisibleSAT = true; //Visibility of Seperating Axis Test bounding box
 
 	float m_fRadius = 0.0f; //Radius
 
@@ -247,6 +250,7 @@ private:
 	OUTPUT: 0 for colliding, other = first axis that succeeds test
 	*/
 	uint SAT(MyRigidBody* const a_pOther);
+	bool CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, int meshASize = 8, int meshBSize = 8);
 };//class
 
 } //namespace Simplex

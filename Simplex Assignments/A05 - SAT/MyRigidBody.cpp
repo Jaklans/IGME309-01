@@ -86,39 +86,41 @@ void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix)
 	m_m4ToWorld = a_m4ModelMatrix;
 
 	//Calculate the 8 corners of the cube
-	vector3 v3Corner[8];
-	//Back square
-	v3Corner[0] = m_v3MinL;
-	v3Corner[1] = vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MinL.z);
-	v3Corner[2] = vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MinL.z);
-	v3Corner[3] = vector3(m_v3MaxL.x, m_v3MaxL.y, m_v3MinL.z);
 
+	m_v3Corner = new vector3[8];
+
+	//Back square
+	m_v3Corner[0] = m_v3MinL;
+	m_v3Corner[1] = vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MinL.z);
+	m_v3Corner[2] = vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MinL.z);
+	m_v3Corner[3] = vector3(m_v3MaxL.x, m_v3MaxL.y, m_v3MinL.z);
+	
 	//Front square
-	v3Corner[4] = vector3(m_v3MinL.x, m_v3MinL.y, m_v3MaxL.z);
-	v3Corner[5] = vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MaxL.z);
-	v3Corner[6] = vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MaxL.z);
-	v3Corner[7] = m_v3MaxL;
+	m_v3Corner[4] = vector3(m_v3MinL.x, m_v3MinL.y, m_v3MaxL.z);
+	m_v3Corner[5] = vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MaxL.z);
+	m_v3Corner[6] = vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MaxL.z);
+	m_v3Corner[7] = m_v3MaxL;
 
 	//Place them in world space
 	for (uint uIndex = 0; uIndex < 8; ++uIndex)
 	{
-		v3Corner[uIndex] = vector3(m_m4ToWorld * vector4(v3Corner[uIndex], 1.0f));
+		m_v3Corner[uIndex] = vector3(m_m4ToWorld * vector4(m_v3Corner[uIndex], 1.0f));
 	}
 
 	//Identify the max and min as the first corner
-	m_v3MaxG = m_v3MinG = v3Corner[0];
+	m_v3MaxG = m_v3MinG = m_v3Corner[0];
 
 	//get the new max and min for the global box
 	for (uint i = 1; i < 8; ++i)
 	{
-		if (m_v3MaxG.x < v3Corner[i].x) m_v3MaxG.x = v3Corner[i].x;
-		else if (m_v3MinG.x > v3Corner[i].x) m_v3MinG.x = v3Corner[i].x;
+		if (m_v3MaxG.x < m_v3Corner[i].x) m_v3MaxG.x = m_v3Corner[i].x;
+		else if (m_v3MinG.x > m_v3Corner[i].x) m_v3MinG.x = m_v3Corner[i].x;
 
-		if (m_v3MaxG.y < v3Corner[i].y) m_v3MaxG.y = v3Corner[i].y;
-		else if (m_v3MinG.y > v3Corner[i].y) m_v3MinG.y = v3Corner[i].y;
+		if (m_v3MaxG.y < m_v3Corner[i].y) m_v3MaxG.y = m_v3Corner[i].y;
+		else if (m_v3MinG.y > m_v3Corner[i].y) m_v3MinG.y = m_v3Corner[i].y;
 
-		if (m_v3MaxG.z < v3Corner[i].z) m_v3MaxG.z = v3Corner[i].z;
-		else if (m_v3MinG.z > v3Corner[i].z) m_v3MinG.z = v3Corner[i].z;
+		if (m_v3MaxG.z < m_v3Corner[i].z) m_v3MaxG.z = m_v3Corner[i].z;
+		else if (m_v3MinG.z > m_v3Corner[i].z) m_v3MinG.z = m_v3Corner[i].z;
 	}
 
 	//we calculate the distance between min and max vectors
@@ -272,10 +274,18 @@ void MyRigidBody::AddToRenderList(void)
 		else
 			m_pMeshMngr->AddWireCubeToRenderList(glm::translate(GetCenterGlobal()) * glm::scale(m_v3ARBBSize), C_YELLOW);
 	}
+	if (m_bVisibleSAT)
+	{
+		if (m_CollidingRBSet.size() > 0)
+			m_pMeshMngr->AddWireCubeToRenderList(glm::translate(GetCenterGlobal()) * glm::scale(m_v3ARBBSize), C_YELLOW);
+		else
+			m_pMeshMngr->AddWireCubeToRenderList(glm::translate(GetCenterGlobal()) * glm::scale(m_v3ARBBSize), C_YELLOW);
+	}
 }
 
 uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 {
+	
 	/*
 	Your code goes here instead of this comment;
 
@@ -286,7 +296,79 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	Simplex that might help you [eSATResults] feel free to use it.
 	(eSATResults::SAT_NONE has a value of 0)
 	*/
+	matrix4 translation = glm::translate(a_pOther->m_m4ToWorld, m_v3Center);
+
+	vector3 meshB[8];
+
+	for (int i = 0; i < 8; i++) {
+		meshB[i] = vector3( vector4(*a_pOther->m_v3Corner, 1.0f) * translation);
+	}
+
+	vector3 currentNormal;
+
+
+	//Cut out translation, keep rotation for collider A
+	matrix3 rotation = matrix3(m_m4ToWorld);
+	
+	//Collider A X-Axis
+	currentNormal = rotation * AXIS_X;
+	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_AX;
+	//Collider A Y-Axis
+	currentNormal = rotation * AXIS_Y;
+	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_AY;
+	//Collider A Z-Axis
+	currentNormal = rotation * AXIS_Z;
+	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_AZ;
+
+
+	//Cut out translation, keep rotation for collider A
+	rotation = matrix3(a_pOther->m_m4ToWorld);
+
+	//Collider B X-Axis
+	currentNormal = rotation * AXIS_X;
+	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_BX;
+	//Collider B Y-Axis
+	currentNormal = rotation * AXIS_Y;
+	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_BY;
+	//Collider B Z-Axis
+	currentNormal = rotation * AXIS_Z;
+	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_BZ;
+
+
+
 
 	//there is no axis test that separates this two objects
 	return eSATResults::SAT_NONE;
+}
+
+//Returns true if the plane with the given normal does divide the shapes, false otherwise
+bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, int meshASize, int meshBSize) {
+	//TODO Optimization
+		//Less alocations, use same memory every time
+		//Calculate magnitude of normal once, use every time
+		//Create optimized Dot function specificly for this check
+	float aMax;
+	float aMin;
+
+	bool aMaxExeeded = false;
+	bool aMinExeeded = false;
+
+	aMax = glm::dot(normal, *meshA);
+	aMin = aMax;
+
+	float current;
+	for (int i = 1; i < meshASize; i++) {
+		current = glm::dot(normal, *(meshA + i));
+		if (current > aMax) aMax = current; 
+		if (current < aMin) aMin = current; 
+	}
+
+	for (int i = 0; i < meshBSize; i++) {
+		current = glm::dot(normal, *(meshB + i));
+		if (current > aMax) aMaxExeeded = true; 
+		if (current < aMin) aMinExeeded = true; 
+
+		if (aMaxExeeded && aMinExeeded) return false;
+	}
+	return true;
 }
