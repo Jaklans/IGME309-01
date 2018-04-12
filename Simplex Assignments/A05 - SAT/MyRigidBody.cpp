@@ -296,43 +296,59 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	Simplex that might help you [eSATResults] feel free to use it.
 	(eSATResults::SAT_NONE has a value of 0)
 	*/
-	matrix4 translation = glm::translate(a_pOther->m_m4ToWorld, m_v3Center);
+	
 
+	vector3 meshA[8];
 	vector3 meshB[8];
 
 	for (int i = 0; i < 8; i++) {
-		meshB[i] = vector3( vector4(*a_pOther->m_v3Corner, 1.0f) * translation);
+		meshA[i] = *(m_v3Corner + i);//vector3(vector4(*(m_v3Corner + i), 1.0f) * m_m4ToWorld);
+	}
+	for (int i = 0; i < 8; i++) {
+		meshB[i] = *(a_pOther->m_v3Corner + i);//vector3( vector4(*(a_pOther->m_v3Corner + i), 1.0f) * a_pOther->m_m4ToWorld);
 	}
 
-	vector3 currentNormal;
 
+	vector3 normals[6];
 
 	//Cut out translation, keep rotation for collider A
 	matrix3 rotation = matrix3(m_m4ToWorld);
 	
 	//Collider A X-Axis
-	currentNormal = rotation * AXIS_X;
-	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_AX;
+	normals[0] = rotation * AXIS_X;
+	if (CheckNormal(normals[0], this->m_v3Corner, meshB))  return eSATResults::SAT_AX;
 	//Collider A Y-Axis
-	currentNormal = rotation * AXIS_Y;
-	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_AY;
+	normals[1] = rotation * AXIS_Y;
+	if (CheckNormal(normals[1], this->m_v3Corner, meshB))  return eSATResults::SAT_AY;
 	//Collider A Z-Axis
-	currentNormal = rotation * AXIS_Z;
-	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_AZ;
+	normals[2] = rotation * AXIS_Z;
+	if (CheckNormal(normals[2], this->m_v3Corner, meshB))  return eSATResults::SAT_AZ;
 
 
 	//Cut out translation, keep rotation for collider A
 	rotation = matrix3(a_pOther->m_m4ToWorld);
 
 	//Collider B X-Axis
-	currentNormal = rotation * AXIS_X;
-	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_BX;
+	normals[3] = rotation * AXIS_X;
+	if (CheckNormal(normals[3], this->m_v3Corner, meshB))  return eSATResults::SAT_BX;
 	//Collider B Y-Axis
-	currentNormal = rotation * AXIS_Y;
-	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_BY;
+	normals[4] = rotation * AXIS_Y;
+	if (CheckNormal(normals[4], this->m_v3Corner, meshB))  return eSATResults::SAT_BY;
 	//Collider B Z-Axis
-	currentNormal = rotation * AXIS_Z;
-	if (CheckNormal(currentNormal, this->m_v3Corner, meshB))  return eSATResults::SAT_BZ;
+	normals[5] = rotation * AXIS_Z;
+	if (CheckNormal(normals[5], this->m_v3Corner, meshB))  return eSATResults::SAT_BZ;
+
+	
+	for (int a = 0; a < 3; a++) {
+		for (int b = 0; b < 3; b++) {
+			vector3 cross = glm::cross(normals[a], normals[b + 3]);
+			if (cross == ZERO_V3) continue;
+			if (CheckNormal(cross, this->m_v3Corner, meshB))
+			{
+				return 7 + a * 3 + b;
+			}
+		}
+	}
 
 
 
@@ -343,18 +359,25 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 
 //Returns true if the plane with the given normal does divide the shapes, false otherwise
 bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, int meshASize, int meshBSize) {
-	//TODO Optimization
+	//TODO Optimization (If this was serious project)
 		//Less alocations, use same memory every time
 		//Calculate magnitude of normal once, use every time
 		//Create optimized Dot function specificly for this check
 	float aMax;
 	float aMin;
 
+	float bMax;
+	float bMin;
+
 	bool aMaxExeeded = false;
 	bool aMinExeeded = false;
 
+
 	aMax = glm::dot(normal, *meshA);
 	aMin = aMax;
+
+	bMax = glm::dot(normal, *meshB);
+	bMin = bMax;
 
 	float current;
 	for (int i = 1; i < meshASize; i++) {
@@ -363,12 +386,25 @@ bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, in
 		if (current < aMin) aMin = current; 
 	}
 
-	for (int i = 0; i < meshBSize; i++) {
+	for (int i = 1; i < meshBSize; i++) {
 		current = glm::dot(normal, *(meshB + i));
-		if (current > aMax) aMaxExeeded = true; 
-		if (current < aMin) aMinExeeded = true; 
+		if (current > bMax) bMax = current;
+		if (current < bMin) bMin = current;
+	}
 
-		if (aMaxExeeded && aMinExeeded) return false;
+	if (aMin + aMax < bMin + bMax) {
+		
+		if (bMin < aMax) {
+			//m_pMeshMngr->AddPlaneToRenderList(glm::translate(quaternion(, normal * (bMin + aMax) / 2.0f), C_RED);
+			//m_pMeshMngr->GeneratePlane(3, normal * (bMin + aMax) / 2.0f); 
+			return false;
+		}
+	}
+	else {
+		if (aMin < bMax) {
+			m_pMeshMngr->GeneratePlane(3, normal * (aMin + bMax) / 2.0f);
+			return false;
+		}
 	}
 	return true;
 }

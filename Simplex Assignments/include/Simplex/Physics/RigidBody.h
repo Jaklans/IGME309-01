@@ -13,23 +13,23 @@ enum eSATResults
 {
 	SAT_NONE = 0,
 	
-	SAT_AX,
+	SAT_AX, //1
 	SAT_AY,
 	SAT_AZ,
 
-	SAT_BX,
+	SAT_BX, //4
 	SAT_BY,
 	SAT_BZ,
 
-	SAT_AXxBX,
+	SAT_AXxBX, //7
 	SAT_AXxBY,
 	SAT_AXxBZ,
 
-	SAT_AYxBX,
+	SAT_AYxBX, //10
 	SAT_AYxBY,
 	SAT_AYxBZ,
 
-	SAT_AZxBX,
+	SAT_AZxBX, //13
 	SAT_AZxBY,
 	SAT_AZxBZ,
 };
