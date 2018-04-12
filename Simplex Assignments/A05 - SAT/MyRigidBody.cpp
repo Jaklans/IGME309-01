@@ -316,12 +316,15 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	
 	//Collider A X-Axis
 	normals[0] = rotation * AXIS_X;
+	normals[0] = glm::normalize(normals[0]);
 	if (CheckNormal(normals[0], this->m_v3Corner, meshB))  return eSATResults::SAT_AX;
 	//Collider A Y-Axis
 	normals[1] = rotation * AXIS_Y;
+	normals[1] = glm::normalize(normals[1]);
 	if (CheckNormal(normals[1], this->m_v3Corner, meshB))  return eSATResults::SAT_AY;
 	//Collider A Z-Axis
 	normals[2] = rotation * AXIS_Z;
+	normals[2] = glm::normalize(normals[2]);
 	if (CheckNormal(normals[2], this->m_v3Corner, meshB))  return eSATResults::SAT_AZ;
 
 
@@ -330,13 +333,16 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 
 	//Collider B X-Axis
 	normals[3] = rotation * AXIS_X;
-	if (CheckNormal(normals[3], this->m_v3Corner, meshB))  return eSATResults::SAT_BX;
+	normals[3] = glm::normalize(normals[3]);
+	if (CheckNormal(normals[3], this->m_v3Corner, meshB, true))  return eSATResults::SAT_BX;
 	//Collider B Y-Axis
 	normals[4] = rotation * AXIS_Y;
-	if (CheckNormal(normals[4], this->m_v3Corner, meshB))  return eSATResults::SAT_BY;
+	normals[4] = glm::normalize(normals[4]);
+	if (CheckNormal(normals[4], this->m_v3Corner, meshB, true))  return eSATResults::SAT_BY;
 	//Collider B Z-Axis
 	normals[5] = rotation * AXIS_Z;
-	if (CheckNormal(normals[5], this->m_v3Corner, meshB))  return eSATResults::SAT_BZ;
+	normals[5] = glm::normalize(normals[5]);
+	if (CheckNormal(normals[5], this->m_v3Corner, meshB, true))  return eSATResults::SAT_BZ;
 
 	
 	for (int a = 0; a < 3; a++) {
@@ -358,7 +364,7 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 }
 
 //Returns true if the plane with the given normal does divide the shapes, false otherwise
-bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, int meshASize, int meshBSize) {
+bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, bool bNormal, int meshASize, int meshBSize) {
 	//TODO Optimization (If this was serious project)
 		//Less alocations, use same memory every time
 		//Calculate magnitude of normal once, use every time
@@ -369,10 +375,6 @@ bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, in
 	float bMax;
 	float bMin;
 
-	bool aMaxExeeded = false;
-	bool aMinExeeded = false;
-
-
 	aMax = glm::dot(normal, *meshA);
 	aMin = aMax;
 
@@ -380,6 +382,7 @@ bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, in
 	bMin = bMax;
 
 	float current;
+
 	for (int i = 1; i < meshASize; i++) {
 		current = glm::dot(normal, *(meshA + i));
 		if (current > aMax) aMax = current; 
@@ -392,19 +395,63 @@ bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, in
 		if (current < bMin) bMin = current;
 	}
 
+	bool aGreaterThanB = false;
 	if (aMin + aMax < bMin + bMax) {
-		
-		if (bMin < aMax) {
-			//m_pMeshMngr->AddPlaneToRenderList(glm::translate(quaternion(, normal * (bMin + aMax) / 2.0f), C_RED);
-			//m_pMeshMngr->GeneratePlane(3, normal * (bMin + aMax) / 2.0f); 
-			return false;
-		}
+		if (bMin < aMax) return false;
 	}
 	else {
-		if (aMin < bMax) {
-			m_pMeshMngr->GeneratePlane(3, normal * (aMin + bMax) / 2.0f);
-			return false;
-		}
+		aGreaterThanB = true;
+		if (aMin < bMax) return false;
 	}
+
+	vector3 AXIS = -AXIS_Z;
+
+	float ang = glm::acos(glm::dot(normal, AXIS)) * 180 / PI;
+
+	vector3 ax = glm::cross(normal, AXIS);
+
+	float mag = aGreaterThanB && bNormal ? aMin + bMax : bMin + aMax;
+
+	matrix4 matrix =
+		glm::translate(normal * mag / 2.0f) *
+		(normal != AXIS ? glm::rotate(ang, ax) : matrix4()) *
+		glm::scale(vector3(5.0f));
+	
+	matrix4 revMatrix =
+		glm::translate(normal * mag / 2.0f) *
+		(normal != AXIS ? glm::rotate(ang + 180.0f, ax) : matrix4()) *
+
+		glm::scale(vector3(5.0f));
+	
+	
+	
+	/*(matrix4 invMatrix =
+		glm::translate(normal * (bMin + aMax) / 2.0f) *
+		m_m4ToWorld *
+		(normal != AXIS ? glm::rotate(ang, ax) : matrix4()) *
+		glm::scale(vector3(5.0f));*/
+
+
+	matrix4 rot = normal != AXIS ? glm::rotate(ang, ax) : matrix4();
+
+	matrix4 mat = rot * glm::scale(glm::translate(matrix4(), normal * (bMin + aMax) / 2.0f), vector3(5.0f));
+
+	/*//Translate to halfway between the min and max of shapes
+	glm::translate(
+	//Rotate base normal of the gen'ed plane to the normal
+	glm::rotate(
+	//Get the angle between base normal and desired normal
+	glm::acos(glm::dot(normal, AXIS_X) / normal.length()),
+	//Get axis of rotation between base normal and desired normal
+	glm::cross(
+	normal,
+	AXIS_X)),
+	normal * (bMin + aMax) / 2.0f);*/
+
+	m_pMeshMngr->AddPlaneToRenderList(
+		matrix, 
+		C_RED);
+	m_pMeshMngr->AddPlaneToRenderList(revMatrix,C_RED);
+
 	return true;
 }
