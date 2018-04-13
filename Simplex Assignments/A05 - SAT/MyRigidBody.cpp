@@ -334,21 +334,22 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	//Collider B X-Axis
 	normals[3] = rotation * AXIS_X;
 	normals[3] = glm::normalize(normals[3]);
-	if (CheckNormal(normals[3], this->m_v3Corner, meshB, true))  return eSATResults::SAT_BX;
+	if (CheckNormal(normals[3], this->m_v3Corner, meshB))  return eSATResults::SAT_BX;
 	//Collider B Y-Axis
 	normals[4] = rotation * AXIS_Y;
 	normals[4] = glm::normalize(normals[4]);
-	if (CheckNormal(normals[4], this->m_v3Corner, meshB, true))  return eSATResults::SAT_BY;
+	if (CheckNormal(normals[4], this->m_v3Corner, meshB))  return eSATResults::SAT_BY;
 	//Collider B Z-Axis
 	normals[5] = rotation * AXIS_Z;
 	normals[5] = glm::normalize(normals[5]);
-	if (CheckNormal(normals[5], this->m_v3Corner, meshB, true))  return eSATResults::SAT_BZ;
+	if (CheckNormal(normals[5], this->m_v3Corner, meshB))  return eSATResults::SAT_BZ;
 
 	
 	for (int a = 0; a < 3; a++) {
 		for (int b = 0; b < 3; b++) {
 			vector3 cross = glm::cross(normals[a], normals[b + 3]);
 			if (cross == ZERO_V3) continue;
+			cross = glm::normalize(cross);
 			if (CheckNormal(cross, this->m_v3Corner, meshB))
 			{
 				return 7 + a * 3 + b;
@@ -364,7 +365,7 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 }
 
 //Returns true if the plane with the given normal does divide the shapes, false otherwise
-bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, bool bNormal, int meshASize, int meshBSize) {
+bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, int meshASize, int meshBSize) {
 	//TODO Optimization (If this was serious project)
 		//Less alocations, use same memory every time
 		//Calculate magnitude of normal once, use every time
@@ -404,53 +405,34 @@ bool MyRigidBody::CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, bo
 		if (aMin < bMax) return false;
 	}
 
-	vector3 AXIS = -AXIS_Z;
+	//Draw the plane for the normal that determines non colision
 
-	float ang = glm::acos(glm::dot(normal, AXIS)) * 180 / PI;
+	//Plane starts with Z Axis as normal
+	vector3 AXIS = AXIS_Z;
 
-	vector3 ax = glm::cross(normal, AXIS);
+	//Create matricies for plane transformation
+	matrix4 matrix = matrix4();
+	matrix4 revMatrix;
 
-	float mag = aGreaterThanB && bNormal ? aMin + bMax : bMin + aMax;
+	//Do the following 
+		//(1) Scale planes
+		//(2) Rotate planes to change normal from Z axis to the desired normal
+		//(3) Translate plane to a midpoint between the Minimum and Maximum
 
-	matrix4 matrix =
-		glm::translate(normal * mag / 2.0f) *
-		(normal != AXIS ? glm::rotate(ang, ax) : matrix4()) *
-		glm::scale(vector3(5.0f));
+	//Steps appear in reverse order due to matrix multiplication properties 
+
+
+	matrix    *= glm::translate(normal * (aGreaterThanB ? aMin + bMax : bMin + aMax) / 2.0f);
+	revMatrix  = matrix;
+
+	matrix    *= normal != AXIS ? glm::rotate(         float(glm::acos(glm::dot(normal, AXIS)) * -180 / PI), glm::cross(normal, AXIS)) : matrix4();
+	revMatrix *= normal != AXIS ? glm::rotate(180.0f + float(glm::acos(glm::dot(normal, AXIS)) * -180 / PI), glm::cross(normal, AXIS)) : matrix4();
+
+	matrix    *= glm::scale(vector3(5.0f));
+	revMatrix *= glm::scale(vector3(5.0f));
 	
-	matrix4 revMatrix =
-		glm::translate(normal * mag / 2.0f) *
-		(normal != AXIS ? glm::rotate(ang + 180.0f, ax) : matrix4()) *
 
-		glm::scale(vector3(5.0f));
-	
-	
-	
-	/*(matrix4 invMatrix =
-		glm::translate(normal * (bMin + aMax) / 2.0f) *
-		m_m4ToWorld *
-		(normal != AXIS ? glm::rotate(ang, ax) : matrix4()) *
-		glm::scale(vector3(5.0f));*/
-
-
-	matrix4 rot = normal != AXIS ? glm::rotate(ang, ax) : matrix4();
-
-	matrix4 mat = rot * glm::scale(glm::translate(matrix4(), normal * (bMin + aMax) / 2.0f), vector3(5.0f));
-
-	/*//Translate to halfway between the min and max of shapes
-	glm::translate(
-	//Rotate base normal of the gen'ed plane to the normal
-	glm::rotate(
-	//Get the angle between base normal and desired normal
-	glm::acos(glm::dot(normal, AXIS_X) / normal.length()),
-	//Get axis of rotation between base normal and desired normal
-	glm::cross(
-	normal,
-	AXIS_X)),
-	normal * (bMin + aMax) / 2.0f);*/
-
-	m_pMeshMngr->AddPlaneToRenderList(
-		matrix, 
-		C_RED);
+	m_pMeshMngr->AddPlaneToRenderList(matrix, C_RED);
 	m_pMeshMngr->AddPlaneToRenderList(revMatrix,C_RED);
 
 	return true;

@@ -250,7 +250,7 @@ private:
 	OUTPUT: 0 for colliding, other = first axis that succeeds test
 	*/
 	uint SAT(MyRigidBody* const a_pOther);
-	bool CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, bool bNormal = false, int meshASize = 8, int meshBSize = 8);
+	bool CheckNormal(vector3 normal, vector3* meshA, vector3* meshB, int meshASize = 8, int meshBSize = 8);
 };//class
 
 } //namespace Simplex
