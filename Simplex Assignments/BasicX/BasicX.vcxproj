@@ -5,9 +5,17 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
@@ -81,7 +89,21 @@
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
@@ -94,7 +116,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -111,6 +139,15 @@
     </CustomBuildAfterTargets>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)_d</TargetName>
+    <ExecutablePath>$(SolutionDir)include\GL\bin;$(SolutionDir)include\FreeImage\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(SolutionDir)include;$(SolutionDir)res;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)include\GL\lib;$(SolutionDir)include\FreeImage\lib;$(LibraryPath)</LibraryPath>
+    <CustomBuildBeforeTargets />
+    <CustomBuildAfterTargets />
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)Z_DELETE\</OutDir>
     <IntDir>$(SolutionDir)Z_DELETE\$(ProjectName)\$(Configuration)\</IntDir>
@@ -123,7 +160,53 @@
     </CustomBuildAfterTargets>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ExecutablePath>$(SolutionDir)include\GL\bin;$(SolutionDir)include\FreeImage\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(SolutionDir)include;$(SolutionDir)res;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)include\GL\lib;$(SolutionDir)include\FreeImage\lib;$(LibraryPath)</LibraryPath>
+    <CustomBuildBeforeTargets />
+    <CustomBuildAfterTargets />
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>EXP_STL;FBXSDK_SHARED;DEBUG;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4251</DisableSpecificWarnings>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalOptions>/D _CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>glu32.lib;glew32.lib;opengl32.lib;FreeImage.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(OutDir)$(TargetName)$(TargetExt)" "$(SolutionDir)_Binary"
+copy "$(OutDir)$(TargetName)$(TargetExt)" "$(SolutionDir)include\BasicX\bin"
+copy "$(OutDir)$(TargetName).lib" "$(SolutionDir)include\BasicX\lib"
+xcopy "$(SolutionDir)include\Simplex\Shaders" "$(SolutionDir)_Binary\Shaders" /y</Command>
+      <Message>Copying files...</Message>
+    </PostBuildEvent>
+    <PreLinkEvent>
+      <Command>
+      </Command>
+    </PreLinkEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
@@ -171,6 +254,52 @@ xcopy "$(SolutionDir)include\Simplex\Shaders" "$(SolutionDir)_Binary\Shaders" /y
       </AdditionalIncludeDirectories>
       <PreprocessorDefinitions>EXP_STL;FBXSDK_SHARED;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader />
+      <AdditionalOptions>/D _CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4251</DisableSpecificWarnings>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;FreeImage.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(OutDir)$(TargetName)$(TargetExt)" "$(SolutionDir)_Binary"
+copy "$(OutDir)$(TargetName)$(TargetExt)" "$(SolutionDir)include\BasicX\bin"
+copy "$(OutDir)$(TargetName).lib" "$(SolutionDir)include\BasicX\lib"
+xcopy "$(SolutionDir)include\Simplex\Shaders" "$(SolutionDir)_Binary\Shaders" /y</Command>
+      <Message>Copying files...</Message>
+    </PostBuildEvent>
+    <PreLinkEvent>
+      <Command>
+      </Command>
+    </PreLinkEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <Bscmake />
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>EXP_STL;FBXSDK_SHARED;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
       <AdditionalOptions>/D _CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4251</DisableSpecificWarnings>
       <ObjectFileName>$(IntDir)</ObjectFileName>

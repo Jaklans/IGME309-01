@@ -14,6 +14,7 @@ void Application::InitVariables(void)
 	uint uInstances = 900;
 #else
 	uint uInstances = 1849;
+	uInstances = 4000;
 #endif
 	int nSquare = static_cast<int>(std::sqrt(uInstances));
 	m_uObjects = nSquare * nSquare;
@@ -29,7 +30,11 @@ void Application::InitVariables(void)
 			m_pEntityMngr->SetModelMatrix(m4Position);
 		}
 	}
+
+	m_pSystem->SetMaxFrameRate(255);
+	
 	m_uOctantLevels = 1;
+	m_pEntityMngr->GenerateTree(m_uOctantLevels);
 	m_pEntityMngr->Update();
 }
 void Application::Update(void)
@@ -44,6 +49,10 @@ void Application::Update(void)
 	CameraRotation();
 	
 	//Update Entity Manager
+	if (m_pEntityMngr->UpdateOctantsEveryFrame) {
+		m_pEntityMngr->GenerateTree(m_uOctantLevels);
+	}
+
 	m_pEntityMngr->Update();
 
 	//Add objects to render list
@@ -53,9 +62,6 @@ void Application::Display(void)
 {
 	// Clear the screen
 	ClearScreen();
-
-	//display octree
-	//m_pRoot->Display();
 	
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();

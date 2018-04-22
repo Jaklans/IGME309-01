@@ -1,11 +1,14 @@
 #include "MyEntityManager.h"
 using namespace Simplex;
+
+
 //  MyEntityManager
 Simplex::MyEntityManager* Simplex::MyEntityManager::m_pInstance = nullptr;
 void Simplex::MyEntityManager::Init(void)
 {
 	m_uEntityCount = 0;
 	m_mEntityArray = nullptr;
+	m_pMeshMngr = MeshManager::GetInstance();
 }
 void Simplex::MyEntityManager::Release(void)
 {
@@ -13,6 +16,10 @@ void Simplex::MyEntityManager::Release(void)
 	{
 		MyEntity* pEntity = m_mEntityArray[uEntity];
 		SafeDelete(pEntity);
+	}
+	if (Octants != nullptr) {
+		delete Octants;
+		Octants = nullptr;
 	}
 	m_uEntityCount = 0;
 	m_mEntityArray = nullptr;
@@ -173,12 +180,64 @@ void Simplex::MyEntityManager::Update(void)
 		m_mEntityArray[i]->ClearCollisionList();
 	}
 
-	//check collisions
-	for (uint i = 0; i < m_uEntityCount - 1; i++)
-	{
-		for (uint j = i + 1; j < m_uEntityCount; j++)
+	//If octree is uninitialized, initialize with 0 size and depth
+	if (Octants == nullptr) GenerateTree(0);
+
+	//If Octree is of depth 0, use normal colision detection
+	if (Octants->size() <= 0) {
+		
+		for (uint i = 0; i < m_uEntityCount - 1; i++)
 		{
-			m_mEntityArray[i]->IsColliding(m_mEntityArray[j]);
+			for (uint j = i + 1; j < m_uEntityCount; j++)
+			{
+				m_mEntityArray[i]->IsColliding(m_mEntityArray[j]);
+			}
+		}
+		
+	}
+	//Else use octree for detection
+	else {
+		for (int i = 0; i < Octants->size(); i++)
+		{
+			(*Octants)[i].CheckCollisions();
+		}
+	}
+}
+void Simplex::MyEntityManager::GenerateTree(int maxSize) 
+{
+	//Create vector if uninitialized
+	if (Octants == nullptr) {
+		Octants = new std::vector<OctantClass>();
+	}
+
+	//If depth is zero, clear octants and generate none
+	if (maxSize == 0) {
+		if (Octants->size() > 0) Octants->clear();
+		return;
+	}
+
+	//Reset Octree
+	maxSize--;
+	Octants->clear();
+
+	//Create master octant (full sized cube, centered on zero)
+	OctantClass master(34.0f, ZERO_V3);
+
+	//Add every non null entity to master octant
+	for (int i = 0; i < m_uEntityCount; i++)
+	{
+		if (m_mEntityArray[i] == nullptr) continue;
+		master.entities.push_back(m_mEntityArray[i]);
+	}
+	
+	//Subdivide, and store subdivisions in Octants Vector
+	master.subDivide(maxSize, Octants);
+
+	//Delete all empty octants (and draw the ones we are killing!)
+	for (int i = (*Octants).size() - 1; i >= 0; i--) {
+		if ((*Octants)[i].entities.size() <= 1) {
+			if (displayOctree) (*Octants)[i].Draw(m_pMeshMngr);
+			Octants->erase(Octants->begin() + i);
 		}
 	}
 }
@@ -283,6 +342,13 @@ void Simplex::MyEntityManager::AddEntityToRenderList(uint a_uIndex, bool a_bRigi
 		{
 			m_mEntityArray[a_uIndex]->AddToRenderList(a_bRigidBody);
 		}
+
+		//Draw the Octree
+		if (displayOctree && Octants != nullptr) {
+			for (int i = 0; i < Octants->size(); i++) {
+				(*Octants)[i].Draw(m_pMeshMngr);
+			}
+		}
 	}
 	else //do it for the specified one
 	{
@@ -298,123 +364,4 @@ void Simplex::MyEntityManager::AddEntityToRenderList(String a_sUniqueID, bool a_
 	{
 		pTemp->AddToRenderList(a_bRigidBody);
 	}
-}
-void Simplex::MyEntityManager::AddDimension(uint a_uIndex, uint a_uDimension)
-{
-	//if the list is empty return
-	if (m_uEntityCount == 0)
-		return;
-
-	//if the index is larger than the number of entries we are asking for the last one
-	if (a_uIndex >= m_uEntityCount)
-		a_uIndex = m_uEntityCount - 1;
-
-	return m_mEntityArray[a_uIndex]->AddDimension(a_uDimension);
-}
-void Simplex::MyEntityManager::AddDimension(String a_sUniqueID, uint a_uDimension)
-{
-	//Get the entity
-	MyEntity* pTemp = MyEntity::GetEntity(a_sUniqueID);
-	//if the entity exists
-	if (pTemp)
-	{
-		pTemp->AddDimension(a_uDimension);
-	}
-}
-void Simplex::MyEntityManager::RemoveDimension(uint a_uIndex, uint a_uDimension)
-{
-	//if the list is empty return
-	if (m_uEntityCount == 0)
-		return;
-
-	//if the index is larger than the number of entries we are asking for the last one
-	if (a_uIndex >= m_uEntityCount)
-		a_uIndex = m_uEntityCount - 1;
-
-	return m_mEntityArray[a_uIndex]->RemoveDimension(a_uDimension);
-}
-void Simplex::MyEntityManager::RemoveDimension(String a_sUniqueID, uint a_uDimension)
-{
-	//Get the entity
-	MyEntity* pTemp = MyEntity::GetEntity(a_sUniqueID);
-	//if the entity exists
-	if (pTemp)
-	{
-		pTemp->RemoveDimension(a_uDimension);
-	}
-}
-void Simplex::MyEntityManager::ClearDimensionSetAll(void)
-{
-	for (uint i = 0; i < m_uEntityCount; ++i)
-	{
-		ClearDimensionSet(i);
-	}
-}
-void Simplex::MyEntityManager::ClearDimensionSet(uint a_uIndex)
-{
-	//if the list is empty return
-	if (m_uEntityCount == 0)
-		return;
-
-	//if the index is larger than the number of entries we are asking for the last one
-	if (a_uIndex >= m_uEntityCount)
-		a_uIndex = m_uEntityCount - 1;
-
-	return m_mEntityArray[a_uIndex]->ClearDimensionSet();
-}
-void Simplex::MyEntityManager::ClearDimensionSet(String a_sUniqueID)
-{
-	//Get the entity
-	MyEntity* pTemp = MyEntity::GetEntity(a_sUniqueID);
-	//if the entity exists
-	if (pTemp)
-	{
-		pTemp->ClearDimensionSet();
-	}
-}
-bool Simplex::MyEntityManager::IsInDimension(uint a_uIndex, uint a_uDimension)
-{
-	//if the list is empty return
-	if (m_uEntityCount == 0)
-		return false;
-
-	//if the index is larger than the number of entries we are asking for the last one
-	if (a_uIndex >= m_uEntityCount)
-		a_uIndex = m_uEntityCount - 1;
-
-	return m_mEntityArray[a_uIndex]->IsInDimension(a_uDimension);
-}
-bool Simplex::MyEntityManager::IsInDimension(String a_sUniqueID, uint a_uDimension)
-{
-	//Get the entity
-	MyEntity* pTemp = MyEntity::GetEntity(a_sUniqueID);
-	//if the entity exists
-	if (pTemp)
-	{
-		return pTemp->IsInDimension(a_uDimension);
-	}
-	return false;
-}
-bool Simplex::MyEntityManager::SharesDimension(uint a_uIndex, MyEntity* const a_pOther)
-{
-	//if the list is empty return
-	if (m_uEntityCount == 0)
-		return false;
-
-	//if the index is larger than the number of entries we are asking for the last one
-	if (a_uIndex >= m_uEntityCount)
-		a_uIndex = m_uEntityCount - 1;
-
-	return m_mEntityArray[a_uIndex]->SharesDimension(a_pOther);
-}
-bool Simplex::MyEntityManager::SharesDimension(String a_sUniqueID, MyEntity* const a_pOther)
-{
-	//Get the entity
-	MyEntity* pTemp = MyEntity::GetEntity(a_sUniqueID);
-	//if the entity exists
-	if (pTemp)
-	{
-		return pTemp->SharesDimension(a_pOther);
-	}
-	return false;
 }

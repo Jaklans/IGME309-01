@@ -49,11 +49,15 @@ void Application::DrawGUI(void)
 			ImGui::Text("	 F3: Orthographic Y\n");
 			ImGui::Text("	 F4: Orthographic Z\n");
 			ImGui::Separator();
-			ImGui::Text(" PageUp: Increment Octant display\n");
-			ImGui::Text(" PageDw: Decrement Octant display\n");
+			ImGui::Text(" PageUp: Toggle Generate Octree Every Frame "); 
+			ImGui::TextColored(v4Color, m_pEntityMngr->UpdateOctantsEveryFrame ? "[TRUE]" : "[FALSE]");
+			ImGui::Text(" PageDw: Toggle Display Octree\n");
+			ImGui::TextColored(v4Color, m_pEntityMngr->displayOctree ? "[TRUE]" : "[FALSE]");
 			ImGui::Separator();
 			ImGui::Text("	  -: Increment Octree subdivision\n");
 			ImGui::Text("	  +: Decrement Octree subdivision\n");
+			ImGui::Separator();
+			ImGui::Text(" Space : Regenerate Octree\n");
 			ImGui::Separator();
 			ImGui::TextColored(ImColor(255, 255, 0), "Octree\n");
 		}
